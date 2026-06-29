@@ -23,10 +23,12 @@
         .smooth-transition { transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1); will-change: transform, opacity; }
         .no-scrollbar::-webkit-scrollbar { display: none; } .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
         
-        .toggle-checkbox:checked { right: 0; border-color: #34C759; }
+        /* สไตล์ปุ่ม Switch ปักหมุดแบบ iOS */
+        .toggle-checkbox { left: 0; transition: all 0.3s ease; }
+        .toggle-checkbox:checked { left: 24px; border-color: #34C759; }
         .toggle-checkbox:checked + .toggle-label { background-color: #34C759; }
-        .toggle-checkbox { right: 4px; z-index: 1; border-color: #e2e8f0; transition: all 0.3s; }
-        .toggle-label { background-color: #e2e8f0; transition: all 0.3s; }
+        .toggle-label { background-color: #d1d5db; transition: all 0.3s ease; }
+        .dark .toggle-label { background-color: #4b5563; }
     </style>
 </head>
 <body class="bg-gradient-to-br from-indigo-50 via-white to-cyan-50 dark:from-gray-950 dark:via-gray-900 dark:to-slate-950 min-h-screen text-gray-900 dark:text-white antialiased overflow-x-hidden smooth-transition">
@@ -72,16 +74,29 @@
                         </div>
                     </div>
 
-                    <div class="glass rounded-[2rem] p-5 shadow-2xl border border-white/40 dark:border-white/10 hidden flex-col justify-center" id="chartContainer">
-                        <h2 class="text-sm font-medium text-gray-500 dark:text-gray-400 mb-2">สัดส่วนตามหมวดหมู่</h2>
-                        <div class="flex gap-2 h-40 w-full justify-center items-center">
-                            <div class="flex-1 relative h-full w-full hidden flex-col items-center" id="incomeChartWrapper">
-                                <span class="text-[10px] font-bold text-iosGreen mb-1 bg-iosGreen/10 px-2 py-0.5 rounded-full">รายรับ</span>
-                                <div class="relative w-full h-full"><canvas id="incomeChart"></canvas></div>
+                    <div class="glass rounded-[2rem] p-6 shadow-2xl border border-white/40 dark:border-white/10 flex flex-col justify-between" id="chartContainer">
+                        <div class="flex justify-between items-center mb-4">
+                            <h2 class="text-xs font-bold text-gray-400 tracking-wide uppercase">ข้อมูลเชิงลึก</h2>
+                            <div class="bg-gray-200/50 dark:bg-black/30 p-0.5 rounded-xl flex text-[11px] font-bold">
+                                <button type="button" onclick="switchChartTab('overview')" id="tabChartOverview" class="px-3 py-1.5 rounded-lg bg-white dark:bg-gray-800 text-iosBlue shadow-sm smooth-transition">ภาพรวม</button>
+                                <button type="button" onclick="switchChartTab('expense')" id="tabChartExpense" class="px-3 py-1.5 rounded-lg text-gray-500 dark:text-gray-400 smooth-transition">รายจ่าย</button>
+                                <button type="button" onclick="switchChartTab('income')" id="tabChartIncome" class="px-3 py-1.5 rounded-lg text-gray-500 dark:text-gray-400 smooth-transition">รายรับ</button>
                             </div>
-                            <div class="flex-1 relative h-full w-full hidden flex-col items-center" id="expenseChartWrapper">
-                                <span class="text-[10px] font-bold text-iosRed mb-1 bg-iosRed/10 px-2 py-0.5 rounded-full">รายจ่าย</span>
-                                <div class="relative w-full h-full"><canvas id="expenseChart"></canvas></div>
+                        </div>
+                        
+                        <div class="relative h-44 w-full flex items-center justify-center">
+                            <div id="overviewChartWrapper" class="w-full h-full">
+                                <canvas id="overviewChart"></canvas>
+                            </div>
+                            <div id="expenseChartWrapper" class="w-full h-full hidden">
+                                <canvas id="expenseChart"></canvas>
+                            </div>
+                            <div id="incomeChartWrapper" class="w-full h-full hidden">
+                                <canvas id="incomeChart"></canvas>
+                            </div>
+                            <div id="chartEmptyState" class="hidden text-center text-gray-400 text-xs py-8">
+                                <i class="fa-solid fa-chart-pie text-3xl mb-2 opacity-40 block text-iosBlue"></i>
+                                ยังไม่มีข้อมูลบันทึกในส่วนนี้
                             </div>
                         </div>
                     </div>
@@ -98,7 +113,7 @@
                     <div id="transactionList" class="space-y-3 max-h-[400px] overflow-y-auto no-scrollbar pb-6">
                         <div class="text-center py-8 text-gray-400 text-sm">
                             <i class="fa-solid fa-circle-notch animate-spin text-iosBlue text-xl mb-2 block"></i>
-                            กำลังเชื่อมต่อข้อมูล...
+                            กำลังดึงข้อมูล...
                         </div>
                     </div>
                 </div>
@@ -120,10 +135,10 @@
                         </div>
 
                         <div class="flex items-center justify-between bg-white/60 dark:bg-black/20 p-3 rounded-xl border border-gray-200 dark:border-gray-800">
-                            <label class="text-sm font-medium text-gray-600 dark:text-gray-300 flex items-center gap-2"><i class="fa-solid fa-thumbtack text-iosOrange"></i> ปักหมุดให้อยู่บนสุด</label>
+                            <label class="text-sm font-medium text-gray-600 dark:text-gray-300 flex items-center gap-2"><i class="fa-solid fa-thumbtack text-iosOrange"></i> ปักหมุดรายการนี้</label>
                             <div class="relative inline-block w-12 mr-2 align-middle select-none transition duration-200 ease-in">
-                                <input type="checkbox" name="toggle" id="isPinned" class="toggle-checkbox absolute block w-6 h-6 rounded-full bg-white border-4 appearance-none cursor-pointer"/>
-                                <label for="isPinned" class="toggle-label block overflow-hidden h-6 rounded-full bg-gray-300 cursor-pointer"></label>
+                                <input type="checkbox" name="toggle" id="isPinned" class="toggle-checkbox absolute block w-6 h-6 rounded-full bg-white border-4 appearance-none cursor-pointer m-0"/>
+                                <label for="isPinned" class="toggle-label block overflow-hidden h-6 rounded-full cursor-pointer"></label>
                             </div>
                         </div>
 
@@ -139,7 +154,7 @@
 
                         <div>
                             <label class="block text-xs font-semibold text-gray-500 mb-1 ml-1">หมวดหมู่ / รายละเอียด</label>
-                            <input type="text" id="category" required placeholder="เช่น ค่าข้าว, เงินเดือน" class="w-full bg-white/60 dark:bg-black/20 border border-gray-200 dark:border-gray-800 rounded-xl p-3 text-sm focus:outline-none focus:border-iosBlue text-gray-800 dark:text-white smooth-transition">
+                            <input type="text" id="category" required placeholder="เช่น ค่าอาหาร, เงินเดือน" class="w-full bg-white/60 dark:bg-black/20 border border-gray-200 dark:border-gray-800 rounded-xl p-3 text-sm focus:outline-none focus:border-iosBlue text-gray-800 dark:text-white smooth-transition">
                             
                             <div class="flex flex-wrap gap-1.5 mt-2" id="quickTags">
                                 <button type="button" onclick="selectTag('🍔 ค่าอาหาร')" class="text-[11px] bg-white/80 dark:bg-white/5 border border-gray-200 dark:border-gray-800 px-2.5 py-1 rounded-full font-medium text-gray-600 dark:text-gray-300 hover:border-iosBlue smooth-transition">อาหาร</button>
@@ -167,7 +182,7 @@
                         <div id="loadingOverlay" class="hidden absolute inset-0 bg-white/60 dark:bg-black/60 backdrop-blur-sm rounded-xl flex items-center justify-center z-10">
                             <div class="bg-white dark:bg-gray-800 p-4 rounded-2xl shadow-xl flex flex-col items-center">
                                 <i class="fa-solid fa-circle-notch animate-spin text-iosBlue text-3xl mb-2"></i>
-                                <span class="text-xs font-bold mt-2 text-gray-700 dark:text-gray-300">กำลังประมวลผล...</span>
+                                <span class="text-xs font-bold mt-2 text-gray-700 dark:text-gray-300">กำลังส่งข้อมูล...</span>
                             </div>
                         </div>
                     </form>
@@ -181,7 +196,6 @@
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
         import { getFirestore, collection, addDoc, onSnapshot, query, orderBy, deleteDoc, doc, updateDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
-        // รหัส Firebase ของคุณ
         const firebaseConfig = {
             apiKey: "AIzaSyAPMIN4I6FTGl1opmurV0Lc7ez0LR5-9Eg",
             authDomain: "savemoney-98630.firebaseapp.com",
@@ -196,11 +210,21 @@
         const txCollection = collection(db, "transactions");
 
         let currentType = 'expense';
+        let activeChartTab = 'overview'; // ตั้งค่าเริ่มต้นให้เปิดที่แท็บภาพรวม
         let allTransactions = []; 
+        let overviewChart = null;
         let expenseChart = null; 
-        let incomeChart = null; // เพิ่มตัวแปรสำหรับกราฟรายรับ
+        let incomeChart = null; 
 
-        document.getElementById('txDate').valueAsDate = new Date();
+        // ฟังก์ชันตั้งค่าวันที่
+        function setLocalISODate() {
+            const now = new Date();
+            const tzOffset = now.getTimezoneOffset() * 60000;
+            const localISOTime = new Date(now.getTime() - tzOffset).toISOString().split('T')[0];
+            document.getElementById('txDate').value = localISOTime;
+        }
+        
+        setLocalISODate();
 
         window.setTxType = function(type) {
             currentType = type;
@@ -222,23 +246,143 @@
 
         window.toggleQuickPin = async function(id, currentStatus) {
             try {
-                await updateDoc(doc(db, "transactions", id), {
-                    isPinned: !currentStatus
-                });
+                await updateDoc(doc(db, "transactions", id), { isPinned: !currentStatus });
             } catch (error) {
-                alert("เกิดข้อผิดพลาดในการปักหมุด ตรวจสอบสิทธิ์ Firebase Rules อีกครั้งครับ");
+                alert("สิทธิ์การเข้าถึงฐานข้อมูลถูกปฏิเสธ");
             }
         }
 
-        // ระบบบันทึกฟอร์ม
+        // ฟังก์ชันสลับการแสดงผล 3 แท็บกราฟ
+        window.switchChartTab = function(tab) {
+            activeChartTab = tab;
+            const tabOver = document.getElementById('tabChartOverview');
+            const tabExp = document.getElementById('tabChartExpense');
+            const tabInc = document.getElementById('tabChartIncome');
+            
+            const wrapOver = document.getElementById('overviewChartWrapper');
+            const wrapExp = document.getElementById('expenseChartWrapper');
+            const wrapInc = document.getElementById('incomeChartWrapper');
+            const emptyState = document.getElementById('chartEmptyState');
+
+            // รีเซ็ตคลาสปุ่มทั้งหมด
+            tabOver.className = "px-3 py-1.5 rounded-lg text-gray-500 dark:text-gray-400 smooth-transition";
+            tabExp.className = "px-3 py-1.5 rounded-lg text-gray-500 dark:text-gray-400 smooth-transition";
+            tabInc.className = "px-3 py-1.5 rounded-lg text-gray-500 dark:text-gray-400 smooth-transition";
+            
+            wrapOver.classList.add('hidden');
+            wrapExp.classList.add('hidden');
+            wrapInc.classList.add('hidden');
+            emptyState.classList.add('hidden');
+
+            // เช็คการเปลี่ยนแท็บ
+            if (tab === 'overview') {
+                tabOver.className = "px-3 py-1.5 rounded-lg bg-white dark:bg-gray-800 text-iosBlue shadow-sm smooth-transition";
+                if (overviewChart) wrapOver.classList.remove('hidden');
+                else emptyState.classList.remove('hidden');
+            } else if (tab === 'expense') {
+                tabExp.className = "px-3 py-1.5 rounded-lg bg-white dark:bg-gray-800 text-iosRed shadow-sm smooth-transition";
+                if (expenseChart) wrapExp.classList.remove('hidden');
+                else emptyState.classList.remove('hidden');
+            } else if (tab === 'income') {
+                tabInc.className = "px-3 py-1.5 rounded-lg bg-white dark:bg-gray-800 text-iosGreen shadow-sm smooth-transition";
+                if (incomeChart) wrapInc.classList.remove('hidden');
+                else emptyState.classList.remove('hidden');
+            }
+        }
+
+        // ฟังก์ชันประมวลผลและสร้างกราฟทั้ง 3 รูปแบบ
+        function renderCharts(transactions) {
+            let totalInc = 0;
+            let totalExp = 0;
+            const expenseData = {};
+            const incomeData = {};
+
+            transactions.forEach(t => {
+                if (t.type === 'expense') {
+                    expenseData[t.category] = (expenseData[t.category] || 0) + t.amount;
+                    totalExp += t.amount;
+                } else if (t.type === 'income') {
+                    incomeData[t.category] = (incomeData[t.category] || 0) + t.amount;
+                    totalInc += t.amount;
+                }
+            });
+
+            const expLabels = Object.keys(expenseData);
+            const expData = Object.values(expenseData);
+            const incLabels = Object.keys(incomeData);
+            const incData = Object.values(incomeData);
+
+            if (overviewChart) overviewChart.destroy();
+            if (expenseChart) expenseChart.destroy();
+            if (incomeChart) incomeChart.destroy();
+
+            const isDark = document.documentElement.classList.contains('dark');
+            const textColor = isDark ? '#e5e7eb' : '#4a5568';
+            const gridColor = isDark ? '#374151' : '#e5e7eb';
+
+            // 1. สร้างกราฟแท่ง (ภาพรวม)
+            if (totalInc > 0 || totalExp > 0) {
+                const ctxOver = document.getElementById('overviewChart').getContext('2d');
+                overviewChart = new Chart(ctxOver, {
+                    type: 'bar',
+                    data: {
+                        labels: ['รายรับทั้งหมด', 'รายจ่ายทั้งหมด'],
+                        datasets: [{
+                            data: [totalInc, totalExp],
+                            backgroundColor: ['#34C759', '#FF3B30'],
+                            borderRadius: 6,
+                            barThickness: 45
+                        }]
+                    },
+                    options: {
+                        responsive: true, maintainAspectRatio: false,
+                        plugins: { legend: { display: false } },
+                        scales: {
+                            y: { beginAtZero: true, grid: { color: gridColor }, ticks: { color: textColor, font: {family: 'SF Pro Display'} } },
+                            x: { grid: { display: false }, ticks: { color: textColor, font: {family: 'SF Pro Display', weight: 'bold'} } }
+                        }
+                    }
+                });
+            } else { overviewChart = null; }
+
+            const donutOptions = {
+                responsive: true, maintainAspectRatio: false, cutout: '65%',
+                plugins: {
+                    legend: { position: 'right', labels: { boxWidth: 8, padding: 6, font: { size: 10, family: 'SF Pro Display' }, color: textColor } }
+                }
+            };
+
+            // 2. สร้างกราฟโดนัท (รายจ่าย)
+            if (expLabels.length > 0) {
+                const ctxExp = document.getElementById('expenseChart').getContext('2d');
+                expenseChart = new Chart(ctxExp, {
+                    type: 'doughnut',
+                    data: { labels: expLabels, datasets: [{ data: expData, backgroundColor: ['#FF3B30', '#FF9500', '#FFCC00', '#FF2D55', '#AF52DE', '#5AC8FA'], borderWidth: 0 }] },
+                    options: donutOptions
+                });
+            } else { expenseChart = null; }
+
+            // 3. สร้างกราฟโดนัท (รายรับ)
+            if (incLabels.length > 0) {
+                const ctxInc = document.getElementById('incomeChart').getContext('2d');
+                incomeChart = new Chart(ctxInc, {
+                    type: 'doughnut',
+                    data: { labels: incLabels, datasets: [{ data: incData, backgroundColor: ['#34C759', '#32ADE6', '#007AFF', '#5856D6', '#FF9500', '#FFCC00'], borderWidth: 0 }] },
+                    options: donutOptions
+                });
+            } else { incomeChart = null; }
+
+            // อัปเดต UI เปิดแท็บปัจจุบัน
+            switchChartTab(activeChartTab);
+        }
+
+        // ระบบบันทึก / แก้ไขข้อมูลฟอร์ม
         document.getElementById('txForm').addEventListener('submit', async (e) => {
             e.preventDefault();
-            
             const submitBtn = document.getElementById('submitBtn');
             const loadingOverlay = document.getElementById('loadingOverlay');
             
             submitBtn.disabled = true;
-            submitBtn.classList.add('opacity-40', 'cursor-not-allowed');
             loadingOverlay.classList.remove('hidden');
 
             const editId = document.getElementById('editId').value;
@@ -251,19 +395,22 @@
             const nowTime = new Date();
             const chosenDate = new Date(dateValue);
             chosenDate.setHours(nowTime.getHours(), nowTime.getMinutes(), nowTime.getSeconds());
-            const timestamp = chosenDate.getTime();
+            let finalTimestamp = chosenDate.getTime();
+
+            if (editId) {
+                const oldTx = allTransactions.find(t => t.id === editId);
+                if (oldTx && oldTx.timestamp) {
+                    const oldDateObj = new Date(oldTx.timestamp);
+                    const oldDateStr = new Date(oldDateObj.getTime() - oldDateObj.getTimezoneOffset() * 60000).toISOString().split('T')[0];
+                    if (oldDateStr === dateValue) { finalTimestamp = oldTx.timestamp; }
+                }
+            }
 
             try {
                 const txData = {
-                    type: currentType,
-                    amount: amount,
-                    category: category,
-                    account: account,
-                    isPinned: isPinned,
-                    timestamp: editId ? undefined : timestamp
+                    type: currentType, amount: amount, category: category,
+                    account: account, isPinned: isPinned, timestamp: finalTimestamp
                 };
-
-                Object.keys(txData).forEach(key => txData[key] === undefined && delete txData[key]);
 
                 if (editId) {
                     await updateDoc(doc(db, "transactions", editId), txData);
@@ -271,14 +418,13 @@
                 } else {
                     await addDoc(txCollection, txData);
                     document.getElementById('txForm').reset();
-                    document.getElementById('txDate').valueAsDate = new Date();
+                    setLocalISODate(); 
                     window.setTxType('expense');
                 }
             } catch (error) {
-                alert("Error: " + error.message);
+                alert("เกิดข้อผิดพลาด: " + error.message);
             } finally {
                 submitBtn.disabled = false;
-                submitBtn.classList.remove('opacity-40', 'cursor-not-allowed');
                 loadingOverlay.classList.add('hidden');
             }
         });
@@ -300,7 +446,8 @@
                 
                 if(tx.timestamp){
                     const d = new Date(tx.timestamp);
-                    document.getElementById('txDate').value = d.toISOString().split('T')[0];
+                    const tzOffset = d.getTimezoneOffset() * 60000;
+                    document.getElementById('txDate').value = new Date(d.getTime() - tzOffset).toISOString().split('T')[0];
                 }
                 window.setTxType(tx.type);
             }
@@ -313,101 +460,16 @@
             document.getElementById('submitText').innerText = "บันทึกข้อมูล";
             document.getElementById('editId').value = "";
             document.getElementById('txForm').reset();
-            document.getElementById('txDate').valueAsDate = new Date();
+            setLocalISODate();
             window.setTxType('expense'); 
         }
 
         window.deleteTx = async function(id) {
-            if(confirm('🗑️ ยืนยันการลบข้อมูลนี้ถาวร?')) {
-                try {
-                    await deleteDoc(doc(db, "transactions", id));
-                } catch (error) {
-                    alert("ลบไม่สำเร็จ: " + error);
-                }
+            if(confirm('🗑️ ยืนยันการลบข้อมูลถาวร?')) {
+                try { await deleteDoc(doc(db, "transactions", id)); } catch (error) { alert(error); }
             }
         }
 
-        // ฟังก์ชันสร้างและอัปเดตกราฟทั้ง 2 ตัว
-        function renderChart(transactions) {
-            const expenseData = {};
-            const incomeData = {};
-
-            transactions.forEach(t => {
-                if (t.type === 'expense') {
-                    expenseData[t.category] = (expenseData[t.category] || 0) + t.amount;
-                } else if (t.type === 'income') {
-                    incomeData[t.category] = (incomeData[t.category] || 0) + t.amount;
-                }
-            });
-
-            const expLabels = Object.keys(expenseData);
-            const expData = Object.values(expenseData);
-            const incLabels = Object.keys(incomeData);
-            const incData = Object.values(incomeData);
-
-            const container = document.getElementById('chartContainer');
-            const expWrapper = document.getElementById('expenseChartWrapper');
-            const incWrapper = document.getElementById('incomeChartWrapper');
-
-            // จัดการการแสดงผลกล่องกราฟ
-            if(expLabels.length === 0 && incLabels.length === 0) {
-                container.classList.add('hidden');
-                container.classList.remove('flex');
-                return;
-            } else {
-                container.classList.remove('hidden');
-                container.classList.add('flex');
-            }
-
-            // แสดง/ซ่อนกราฟแต่ละตัว
-            expLabels.length > 0 ? incWrapper.classList.remove('hidden') : null; // trick placeholder
-            if (expLabels.length > 0) expWrapper.classList.remove('hidden'); else expWrapper.classList.add('hidden');
-            if (incLabels.length > 0) incWrapper.classList.remove('hidden'); else incWrapper.classList.add('hidden');
-
-            // การตั้งค่ากราฟทั่วไป
-            const isDark = document.documentElement.classList.contains('dark');
-            const textColor = isDark ? '#e5e7eb' : '#374151';
-            const commonOptions = {
-                responsive: true, maintainAspectRatio: false, cutout: '65%',
-                plugins: { legend: { display: false } } // ซ่อน Legend เพื่อความมินิมอลในพื้นที่จำกัด
-            };
-
-            // อัปเดตหรือสร้างกราฟรายจ่าย
-            if (expenseChart) {
-                expenseChart.data.labels = expLabels;
-                expenseChart.data.datasets[0].data = expData;
-                expenseChart.update();
-            } else if(expLabels.length > 0) {
-                const ctxExp = document.getElementById('expenseChart').getContext('2d');
-                expenseChart = new Chart(ctxExp, {
-                    type: 'doughnut',
-                    data: {
-                        labels: expLabels,
-                        datasets: [{ data: expData, backgroundColor: ['#FF3B30', '#FF9500', '#FFCC00', '#FF2D55', '#AF52DE'], borderWidth: 0, hoverOffset: 4 }]
-                    },
-                    options: commonOptions
-                });
-            }
-
-            // อัปเดตหรือสร้างกราฟรายรับ
-            if (incomeChart) {
-                incomeChart.data.labels = incLabels;
-                incomeChart.data.datasets[0].data = incData;
-                incomeChart.update();
-            } else if(incLabels.length > 0) {
-                const ctxInc = document.getElementById('incomeChart').getContext('2d');
-                incomeChart = new Chart(ctxInc, {
-                    type: 'doughnut',
-                    data: {
-                        labels: incLabels,
-                        datasets: [{ data: incData, backgroundColor: ['#34C759', '#32ADE6', '#007AFF', '#5856D6', '#5AC8FA'], borderWidth: 0, hoverOffset: 4 }]
-                    },
-                    options: commonOptions
-                });
-            }
-        }
-
-        // ดึงข้อมูล Realtime
         const q = query(txCollection, orderBy("timestamp", "desc"));
         onSnapshot(q, (snapshot) => {
             const listEl = document.getElementById('transactionList');
@@ -415,10 +477,6 @@
             
             let balance = 0, income = 0, expense = 0;
             allTransactions = []; 
-
-            if (snapshot.empty) {
-                listEl.innerHTML = `<div class="text-center py-8 text-gray-400 text-sm">ยังไม่มีข้อมูลบันทึก หรือติดปัญหา Permission</div>`;
-            }
 
             snapshot.forEach((docSnap) => {
                 const data = docSnap.data();
@@ -428,8 +486,7 @@
                 else { expense += data.amount; balance -= data.amount; }
             });
 
-            // อัปเดตกราฟด้วยข้อมูลล่าสุด
-            renderChart(allTransactions);
+            renderCharts(allTransactions);
 
             allTransactions.sort((a, b) => {
                 if (a.isPinned && !b.isPinned) return -1;
@@ -437,18 +494,21 @@
                 return b.timestamp - a.timestamp;
             });
 
+            if (allTransactions.length === 0) {
+                listEl.innerHTML = `<div class="text-center py-8 text-gray-400 text-sm">ยังไม่มีข้อมูลบันทึกในระบบ</div>`;
+            }
+
             allTransactions.forEach((data) => {
                 const icon = data.type === 'income' ? 'fa-arrow-down-long text-iosGreen bg-iosGreen/10' : 'fa-arrow-up-long text-iosRed bg-iosRed/10';
                 const displayDate = data.timestamp ? new Date(data.timestamp).toLocaleDateString('th-TH', {day: 'numeric', month: 'short', year: '2-digit'}) : '-';
-                const pinBtnClass = data.isPinned ? 'text-iosOrange' : 'text-gray-300 dark:text-gray-600 hover:text-gray-400';
-                const pinBtnIcon = `<button onclick="toggleQuickPin('${data.id}', ${data.isPinned})" class="${pinBtnClass} p-1 text-sm smooth-transition"><i class="fa-solid fa-thumbtack ${data.isPinned ? 'transform rotate-45 drop-shadow-md' : ''}"></i></button>`;
+                const pinClass = data.isPinned ? 'text-iosOrange' : 'text-gray-300 dark:text-gray-600 hover:text-gray-400';
 
                 const div = document.createElement('div');
-                div.className = `relative bg-white/40 dark:bg-white/5 p-3.5 rounded-2xl flex justify-between items-center border hover:scale-[1.01] active:scale-[0.99] smooth-transition ${data.isPinned ? 'border-iosOrange/40 shadow-sm bg-orange-50/20 dark:bg-orange-900/10' : 'border-white/20'}`;
+                div.className = `relative bg-white/40 dark:bg-white/5 p-3.5 rounded-2xl flex justify-between items-center border hover:scale-[1.01] smooth-transition ${data.isPinned ? 'border-iosOrange/40 shadow-sm bg-orange-50/20 dark:bg-orange-900/10' : 'border-white/20'}`;
                 
                 div.innerHTML = `
                     <div class="flex items-center gap-3">
-                        <div class="relative w-10 h-10 rounded-xl flex items-center justify-center text-sm ${icon}"></div>
+                        <div class="w-10 h-10 rounded-xl flex items-center justify-center text-sm ${icon}"></div>
                         <div>
                             <p class="text-sm font-bold tracking-tight">${data.category}</p>
                             <div class="flex items-center gap-2 mt-0.5">
@@ -464,7 +524,7 @@
                             </p>
                         </div>
                         <div class="flex items-center border-l border-gray-200 dark:border-gray-700 pl-2 gap-1.5">
-                            ${pinBtnIcon}
+                            <button onclick="toggleQuickPin('${data.id}', ${data.isPinned})" class="${pinClass} p-1 text-sm smooth-transition"><i class="fa-solid fa-thumbtack ${data.isPinned ? 'transform rotate-45' : ''}"></i></button>
                             <button onclick="editTx('${data.id}')" class="text-gray-400 hover:text-iosBlue p-1.5 text-xs bg-white dark:bg-gray-800 shadow-sm rounded-lg smooth-transition"><i class="fa-solid fa-pen"></i></button>
                             <button onclick="deleteTx('${data.id}')" class="text-gray-400 hover:text-iosRed p-1.5 text-xs bg-white dark:bg-gray-800 shadow-sm rounded-lg smooth-transition"><i class="fa-solid fa-trash-can"></i></button>
                         </div>
@@ -477,16 +537,16 @@
             document.getElementById('totalIncome').textContent = `฿${income.toLocaleString(undefined, {minimumFractionDigits: 2})}`;
             document.getElementById('totalExpense').textContent = `฿${expense.toLocaleString(undefined, {minimumFractionDigits: 2})}`;
         }, (error) => {
-            document.getElementById('transactionList').innerHTML = `<div class="text-center py-8 text-iosRed text-sm font-bold"><i class="fa-solid fa-triangle-exclamation mb-2 text-2xl block"></i>เชื่อมต่อฐานข้อมูลไม่ได้ (Permissions Error)</div>`;
+            document.getElementById('transactionList').innerHTML = `<div class="text-center py-8 text-iosRed text-sm font-bold"><i class="fa-solid fa-triangle-exclamation mb-2 text-2xl block"></i>เชื่อมต่อฐานข้อมูลไม่ได้ โปรดตรวจสอบ Firebase Rules</div>`;
         });
 
-        // ส่งออก Excel
         window.exportToCSV = function() {
             if(allTransactions.length === 0) return alert("ไม่มีข้อมูลให้ส่งออก");
             let csvContent = "\uFEFFวันที่,ประเภท,หมวดหมู่,ช่องทางเงิน,จำนวนเงิน,ปักหมุด\n";
             allTransactions.forEach(t => {
                 const d = t.timestamp ? new Date(t.timestamp).toLocaleDateString('th-TH') : '-';
-                csvContent += `"${d}","${t.type === 'income' ? 'รายรับ' : 'รายจ่าย'}","${t.category}","${t.account}",${t.amount},"${t.isPinned ? 'ใช่' : 'ไม่ใช่'}"\n`;
+                const safeCategory = t.category ? t.category.replace(/"/g, '""') : '';
+                csvContent += `"${d}","${t.type === 'income' ? 'รายรับ' : 'รายจ่าย'}","${safeCategory}","${t.account}",${t.amount},"${t.isPinned ? 'ใช่' : 'ไม่ใช่'}"\n`;
             });
             const link = document.createElement("a");
             link.href = URL.createObjectURL(new Blob([csvContent], { type: 'text/csv;charset=utf-8;' }));
@@ -494,9 +554,9 @@
             link.click();
         }
 
-        // ระบบ Dark Mode
         document.getElementById('themeToggle').addEventListener('click', () => {
             document.documentElement.classList.toggle('dark');
+            renderCharts(allTransactions); 
         });
     </script>
 </body>
