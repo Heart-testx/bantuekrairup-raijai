@@ -1,0 +1,442 @@
+<!DOCTYPE html>
+<html lang="th" class="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>iWallet Pro - iOS Glassmorphism</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: { extend: { colors: { iosBlue: '#007AFF', iosGreen: '#34C759', iosRed: '#FF3B30', iosOrange: '#FF9500' } } }
+        }
+    </script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=SF+Pro+Display:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    
+    <style>
+        body { font-family: 'SF Pro Display', -apple-system, sans-serif; -webkit-font-smoothing: antialiased; }
+        .glass { background: rgba(255, 255, 255, 0.4); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px); border: 1px solid rgba(255, 255, 255, 0.25); }
+        .dark .glass { background: rgba(28, 28, 30, 0.6); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px); border: 1px solid rgba(255, 255, 255, 0.05); }
+        .smooth-transition { transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1); will-change: transform, opacity; }
+        .no-scrollbar::-webkit-scrollbar { display: none; } .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+        
+        /* Custom Toggle Switch for iOS Style */
+        .toggle-checkbox:checked { right: 0; border-color: #34C759; }
+        .toggle-checkbox:checked + .toggle-label { background-color: #34C759; }
+        .toggle-checkbox { right: 4px; z-index: 1; border-color: #e2e8f0; transition: all 0.3s; }
+        .toggle-label { background-color: #e2e8f0; transition: all 0.3s; }
+    </style>
+</head>
+<body class="bg-gradient-to-br from-indigo-50 via-white to-cyan-50 dark:from-gray-950 dark:via-gray-900 dark:to-slate-950 min-h-screen text-gray-900 dark:text-white antialiased overflow-x-hidden smooth-transition">
+
+    <div class="fixed top-[-10%] left-[-10%] w-[50vw] h-[50vw] bg-blue-400/20 rounded-full blur-[120px] pointer-events-none"></div>
+    <div class="fixed bottom-[-10%] right-[-10%] w-[50vw] h-[50vw] bg-pink-400/20 rounded-full blur-[120px] pointer-events-none"></div>
+
+    <div class="max-w-md md:max-w-5xl mx-auto px-4 py-6 md:py-12 relative z-10">
+        
+        <header class="flex justify-between items-center mb-8 glass rounded-3xl p-4 shadow-xl smooth-transition">
+            <div class="flex items-center gap-3">
+                <div class="w-10 h-10 bg-iosBlue rounded-2xl flex items-center justify-center text-white text-xl shadow-lg shadow-blue-500/30">
+                    <i class="fa-solid fa-wallet"></i>
+                </div>
+                <div>
+                    <h1 class="text-xs text-gray-500 dark:text-gray-400 font-medium">บันทึกรายรับรายจ่าย</h1>
+                    <p class="text-lg font-bold tracking-tight">savemoneyinfo</p>
+                </div>
+            </div>
+            <button id="themeToggle" class="w-12 h-12 rounded-2xl glass flex items-center justify-center text-lg active:scale-90 smooth-transition">
+                <i class="fa-solid fa-moon dark:hidden text-gray-700"></i>
+                <i class="fa-solid fa-sun hidden dark:block text-iosOrange"></i>
+            </button>
+        </header>
+
+        <div class="grid grid-cols-1 md:grid-cols-5 gap-6">
+            
+            <div class="md:col-span-3 space-y-6">
+                <div class="glass rounded-[2rem] p-6 shadow-2xl relative overflow-hidden border border-white/40 dark:border-white/10">
+                    <p class="text-sm font-medium text-gray-500 dark:text-gray-400 mb-1">ยอดเงินคงเหลือรวม</p>
+                    <p class="text-4xl font-extrabold tracking-tight mb-6" id="totalBalance">฿0.00</p>
+                    <div class="grid grid-cols-2 gap-4">
+                        <div class="bg-white/50 dark:bg-white/5 p-4 rounded-2xl border border-white/20">
+                            <div class="flex items-center gap-2 text-iosGreen text-xs font-semibold mb-1"><i class="fa-solid fa-arrow-down-long"></i> รายรับรวม</div>
+                            <p class="text-lg font-bold text-gray-800 dark:text-white" id="totalIncome">฿0.00</p>
+                        </div>
+                        <div class="bg-white/50 dark:bg-white/5 p-4 rounded-2xl border border-white/20">
+                            <div class="flex items-center gap-2 text-iosRed text-xs font-semibold mb-1"><i class="fa-solid fa-arrow-up-long"></i> รายจ่ายรวม</div>
+                            <p class="text-lg font-bold text-gray-800 dark:text-white" id="totalExpense">฿0.00</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="glass rounded-[2rem] p-6 shadow-2xl">
+                    <h2 class="text-lg font-bold tracking-tight mb-4">รายการบันทึก (เรียงตามปักหมุด & เวลา)</h2>
+                    <div id="transactionList" class="space-y-3 max-h-[450px] overflow-y-auto no-scrollbar pb-10">
+                        <div class="text-center py-8 text-gray-400 text-sm">
+                            <i class="fa-solid fa-circle-notch animate-spin text-iosBlue text-xl mb-2 block"></i>
+                            กำลังเชื่อมต่อฐานข้อมูล...
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="md:col-span-2">
+                <div class="glass rounded-[2rem] p-6 shadow-2xl sticky top-6">
+                    <div class="flex justify-between items-center mb-4">
+                        <h2 class="text-lg font-bold tracking-tight" id="formTitle">บันทึกรายการใหม่</h2>
+                        <button type="button" id="cancelEditBtn" onclick="cancelEdit()" class="hidden text-xs bg-gray-200 dark:bg-gray-700 px-3 py-1 rounded-full font-semibold text-gray-600 dark:text-gray-300 hover:bg-gray-300 smooth-transition">ยกเลิกการแก้ไข</button>
+                    </div>
+                    
+                    <form id="txForm" class="space-y-4 relative">
+                        <input type="hidden" id="editId" value="">
+                        <input type="hidden" id="oldImageUrl" value="">
+
+                        <div class="bg-gray-200/50 dark:bg-black/30 p-1 rounded-xl flex smooth-transition">
+                            <button type="button" onclick="setTxType('expense')" id="btnExpense" class="flex-1 py-2 text-sm font-semibold rounded-lg bg-white dark:bg-gray-800 shadow-sm text-iosRed smooth-transition">รายจ่าย</button>
+                            <button type="button" onclick="setTxType('income')" id="btnIncome" class="flex-1 py-2 text-sm font-semibold rounded-lg text-gray-500 dark:text-gray-400 smooth-transition">รายรับ</button>
+                        </div>
+
+                        <div class="flex items-center justify-between bg-white/60 dark:bg-black/20 p-3 rounded-xl border border-gray-200 dark:border-gray-800">
+                            <label class="text-sm font-medium text-gray-600 dark:text-gray-300 flex items-center gap-2"><i class="fa-solid fa-thumbtack text-iosOrange"></i> ปักหมุดรายการนี้</label>
+                            <div class="relative inline-block w-12 mr-2 align-middle select-none transition duration-200 ease-in">
+                                <input type="checkbox" name="toggle" id="isPinned" class="toggle-checkbox absolute block w-6 h-6 rounded-full bg-white border-4 appearance-none cursor-pointer"/>
+                                <label for="isPinned" class="toggle-label block overflow-hidden h-6 rounded-full bg-gray-300 cursor-pointer"></label>
+                            </div>
+                        </div>
+
+                        <div>
+                            <input type="number" id="amount" required step="0.01" placeholder="จำนวนเงิน 0.00" class="w-full bg-white/60 dark:bg-black/20 border border-gray-200 dark:border-gray-800 rounded-xl p-3 text-xl font-bold focus:outline-none focus:border-iosBlue text-center smooth-transition">
+                        </div>
+
+                        <div>
+                            <input type="text" id="category" required placeholder="หมวดหมู่ / รายละเอียด" class="w-full bg-white/60 dark:bg-black/20 border border-gray-200 dark:border-gray-800 rounded-xl p-3 text-sm focus:outline-none focus:border-iosBlue smooth-transition">
+                        </div>
+
+                        <div>
+                            <select id="account" class="w-full bg-white/60 dark:bg-black/20 border border-gray-200 dark:border-gray-800 rounded-xl p-3 text-sm focus:outline-none focus:border-iosBlue smooth-transition">
+                                <option value="เงินสด">💵 เงินสด</option>
+                                <option value="บัญชีธนาคาร">🏦 บัญชีธนาคาร</option>
+                                <option value="Wallet">📱 Wallet / E-Wallet</option>
+                                <option value="บัตรเครดิต">💳 บัตรเครดิต</option>
+                            </select>
+                        </div>
+
+                        <div>
+                            <label class="block w-full bg-blue-50 dark:bg-blue-900/20 border border-dashed border-iosBlue/50 text-iosBlue font-medium text-sm text-center py-3 rounded-xl cursor-pointer hover:bg-blue-100 dark:hover:bg-blue-900/40 smooth-transition">
+                                <i class="fa-solid fa-camera mr-2"></i> <span id="fileName">แนบรูปภาพ / สลิป (ถ้ามี)</span>
+                                <input type="file" id="slipImage" accept="image/*" class="hidden" onchange="previewFile()">
+                            </label>
+                            <div id="imagePreviewContainer" class="hidden mt-2 relative w-full h-32 bg-gray-100 dark:bg-gray-800 rounded-xl overflow-hidden border border-gray-200 dark:border-gray-700">
+                                <img id="imagePreview" src="" class="w-full h-full object-cover">
+                                <button type="button" onclick="removeImage()" class="absolute top-2 right-2 bg-black/50 text-white w-6 h-6 rounded-full text-xs flex items-center justify-center hover:bg-iosRed"><i class="fa-solid fa-xmark"></i></button>
+                            </div>
+                        </div>
+
+                        <button type="submit" id="submitBtn" class="w-full bg-iosBlue text-white font-semibold py-3.5 rounded-xl shadow-lg shadow-blue-500/20 active:scale-[0.98] hover:bg-blue-600 smooth-transition flex justify-center items-center gap-2">
+                            <i class="fa-solid fa-cloud-arrow-up"></i> <span id="submitText">บันทึกส่งขึ้นคลาวด์</span>
+                        </button>
+
+                        <div id="loadingOverlay" class="hidden absolute inset-0 bg-white/50 dark:bg-black/50 backdrop-blur-sm rounded-xl flex items-center justify-center z-10">
+                            <div class="bg-white dark:bg-gray-800 p-4 rounded-2xl shadow-xl flex flex-col items-center">
+                                <i class="fa-solid fa-circle-notch animate-spin text-iosBlue text-3xl mb-2"></i>
+                                <span class="text-xs font-bold text-gray-700 dark:text-gray-300">กำลังประมวลผล...</span>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <div id="imageModal" class="hidden fixed inset-0 z-50 bg-black/90 backdrop-blur-sm flex items-center justify-center p-4 opacity-0 smooth-transition" onclick="closeImageModal()">
+        <img id="fullImage" src="" class="max-w-full max-h-[80vh] rounded-xl shadow-2xl transform scale-95 transition duration-300">
+        <button class="absolute top-6 right-6 text-white text-3xl hover:text-iosRed"><i class="fa-solid fa-xmark"></i></button>
+    </div>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+        import { getFirestore, collection, addDoc, onSnapshot, query, orderBy, deleteDoc, doc, updateDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+        import { getStorage, ref, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-storage.js";
+
+        // คอนฟิก Firebase ของคุณ
+        const firebaseConfig = {
+            apiKey: "AIzaSyAPMIN4I6FTGl1opmurV0Lc7ez0LR5-9Eg",
+            authDomain: "savemoney-98630.firebaseapp.com",
+            projectId: "savemoney-98630",
+            storageBucket: "savemoney-98630.firebasestorage.app",
+            messagingSenderId: "1046270701404",
+            appId: "1:1046270701404:web:f4ada2bbf6d86c5f5e9b99"
+        };
+
+        // Initialize Firebase
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+        const storage = getStorage(app);
+        const txCollection = collection(db, "transactions");
+
+        let currentType = 'expense';
+        let allTransactions = []; // เก็บ State ข้อมูลไว้ค้นหาตอนกดแก้ไข
+
+        // 1. จัดการเปลี่ยนปุ่ม และ Clear Form
+        window.setTxType = function(type) {
+            currentType = type;
+            const btnExpense = document.getElementById('btnExpense');
+            const btnIncome = document.getElementById('btnIncome');
+            
+            if(type === 'expense') {
+                btnExpense.className = "flex-1 py-2 text-sm font-semibold rounded-lg bg-white dark:bg-gray-800 shadow-sm text-iosRed smooth-transition";
+                btnIncome.className = "flex-1 py-2 text-sm font-semibold rounded-lg text-gray-500 dark:text-gray-400 smooth-transition";
+            } else {
+                btnIncome.className = "flex-1 py-2 text-sm font-semibold rounded-lg bg-white dark:bg-gray-800 shadow-sm text-iosGreen smooth-transition";
+                btnExpense.className = "flex-1 py-2 text-sm font-semibold rounded-lg text-gray-500 dark:text-gray-400 smooth-transition";
+            }
+
+            // เคลียร์ข้อมูลฟอร์มทุกครั้งที่เปลี่ยนฝั่ง (แต่ไม่เคลียร์หมุดและบัญชีเพื่อให้กรอกต่อง่าย)
+            document.getElementById('amount').value = '';
+            document.getElementById('category').value = '';
+            window.removeImage();
+        }
+
+        // 2. จัดการเลือกรูปภาพ Preview
+        window.previewFile = function() {
+            const file = document.getElementById('slipImage').files[0];
+            if (file) {
+                document.getElementById('fileName').innerText = "เลือกไฟล์แล้ว (" + file.name.substring(0,10) + "...)";
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    document.getElementById('imagePreview').src = e.target.result;
+                    document.getElementById('imagePreviewContainer').classList.remove('hidden');
+                }
+                reader.readAsDataURL(file);
+            }
+        }
+
+        // เอาภาพที่เลือกออก
+        window.removeImage = function() {
+            document.getElementById('slipImage').value = '';
+            document.getElementById('fileName').innerHTML = 'แนบรูปภาพ / สลิป (ถ้ามี)';
+            document.getElementById('imagePreviewContainer').classList.add('hidden');
+            document.getElementById('imagePreview').src = '';
+            document.getElementById('oldImageUrl').value = '';
+        }
+
+        // 3. ฟังก์ชันบันทึกข้อมูล (เพิ่มใหม่ หรือ อัปเดต) ป้องกันการกดซ้ำด้วย Loading
+        document.getElementById('txForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            // เปิดหน้าต่าง Loading Block UI
+            const loadingOverlay = document.getElementById('loadingOverlay');
+            loadingOverlay.classList.remove('hidden');
+
+            const editId = document.getElementById('editId').value;
+            const amount = parseFloat(document.getElementById('amount').value);
+            const category = document.getElementById('category').value;
+            const account = document.getElementById('account').value;
+            const isPinned = document.getElementById('isPinned').checked;
+            const file = document.getElementById('slipImage').files[0];
+            
+            let imageUrl = document.getElementById('oldImageUrl').value; // ใช้ URL เดิมถ้าไม่ได้อัปรูปใหม่
+
+            try {
+                // ถ้ามีการเลือกไฟล์ใหม่ ให้อัปโหลดขึ้น Storage ก่อน
+                if (file) {
+                    const storageRef = ref(storage, 'slips/' + Date.now() + '_' + file.name);
+                    await uploadBytes(storageRef, file);
+                    imageUrl = await getDownloadURL(storageRef); // ขอ Link รูปที่อัปโหลดเสร็จ
+                }
+
+                const txData = {
+                    type: currentType,
+                    amount: amount,
+                    category: category,
+                    account: account,
+                    isPinned: isPinned,
+                    imageUrl: imageUrl,
+                    timestamp: editId ? undefined : new Date().getTime() // ถ้าแก้ไข ไม่ต้องเปลี่ยนเวลาสร้าง
+                };
+
+                // ลบค่า undefined ออก (กรณีแก้ไข จะได้ไม่เขียนทับ timestamp เก่า)
+                Object.keys(txData).forEach(key => txData[key] === undefined && delete txData[key]);
+
+                if (editId) {
+                    // โหมดอัปเดตข้อมูล
+                    await updateDoc(doc(db, "transactions", editId), txData);
+                    alert("อัปเดตรายการเรียบร้อย!");
+                    window.cancelEdit(); // ยกเลิกโหมดแก้ไข
+                } else {
+                    // โหมดสร้างใหม่
+                    await addDoc(txCollection, txData);
+                    document.getElementById('txForm').reset();
+                    window.removeImage();
+                }
+                
+            } catch (error) {
+                alert("เกิดข้อผิดพลาด: " + error.message);
+            } finally {
+                // ปิด Loading
+                loadingOverlay.classList.add('hidden');
+            }
+        });
+
+        // 4. เข้าสู่โหมดแก้ไข (ดึงข้อมูลมาใส่ Form)
+        window.editTx = function(id) {
+            const tx = allTransactions.find(t => t.id === id);
+            if(tx) {
+                window.scrollTo({ top: 0, behavior: 'smooth' }); // เลื่อนขึ้นไปบนสุด
+                
+                document.getElementById('formTitle').innerText = "แก้ไขรายการ";
+                document.getElementById('formTitle').classList.add("text-iosOrange");
+                document.getElementById('cancelEditBtn').classList.remove('hidden');
+                document.getElementById('submitText').innerText = "อัปเดตข้อมูล";
+                
+                document.getElementById('editId').value = tx.id;
+                document.getElementById('amount').value = tx.amount;
+                document.getElementById('category').value = tx.category;
+                document.getElementById('account').value = tx.account;
+                document.getElementById('isPinned').checked = tx.isPinned || false;
+                
+                window.setTxType(tx.type);
+
+                // ถ้ารายการเดิมมีรูปภาพ ให้แสดง Preview
+                if (tx.imageUrl) {
+                    document.getElementById('oldImageUrl').value = tx.imageUrl;
+                    document.getElementById('imagePreview').src = tx.imageUrl;
+                    document.getElementById('imagePreviewContainer').classList.remove('hidden');
+                    document.getElementById('fileName').innerText = "มีรูปภาพแนบอยู่แล้ว (เลือกใหม่เพื่อเปลี่ยน)";
+                } else {
+                    window.removeImage();
+                }
+            }
+        }
+
+        // ยกเลิกโหมดแก้ไข
+        window.cancelEdit = function() {
+            document.getElementById('formTitle').innerText = "บันทึกรายการใหม่";
+            document.getElementById('formTitle').classList.remove("text-iosOrange");
+            document.getElementById('cancelEditBtn').classList.add('hidden');
+            document.getElementById('submitText').innerText = "บันทึกส่งขึ้นคลาวด์";
+            
+            document.getElementById('editId').value = "";
+            document.getElementById('txForm').reset();
+            window.removeImage();
+            window.setTxType('expense'); // กลับไปตั้งต้นที่รายจ่าย
+        }
+
+        // 5. ระบบยืนยันการลบ
+        window.deleteTx = async function(id) {
+            if(confirm('🗑️ คุณแน่ใจใช่ไหมว่าจะลบข้อมูลรายการนี้แบบถาวร?\n(ระบบจะลบข้อมูลออกจาก Cloud ทันที)')) {
+                // สามารถเพิ่ม Loading Overlay แบบอิสระได้ แต่เพื่อความไวใช้ตัวเดิมของ Form ได้
+                document.getElementById('loadingOverlay').classList.remove('hidden');
+                try {
+                    await deleteDoc(doc(db, "transactions", id));
+                } catch (error) {
+                    alert("ลบไม่สำเร็จ: " + error);
+                } finally {
+                    document.getElementById('loadingOverlay').classList.add('hidden');
+                }
+            }
+        }
+
+        // 6. ดึงข้อมูล Real-time (ระบบปักหมุด)
+        const q = query(txCollection, orderBy("timestamp", "desc"));
+        onSnapshot(q, (snapshot) => {
+            const listEl = document.getElementById('transactionList');
+            listEl.innerHTML = '';
+            
+            let balance = 0, income = 0, expense = 0;
+            allTransactions = []; // รีเซ็ต
+
+            if (snapshot.empty) {
+                listEl.innerHTML = `<div class="text-center py-8 text-gray-400 text-sm">ยังไม่มีรายการบันทึกครับผม</div>`;
+            }
+
+            // เก็บเข้า Array เพื่อคำนวณและเรียงลำดับ ปักหมุด (Pin) ให้อยู่บนสุด
+            snapshot.forEach((docSnap) => {
+                const data = docSnap.data();
+                allTransactions.push({ id: docSnap.id, ...data });
+                
+                if (data.type === 'income') { income += data.amount; balance += data.amount; } 
+                else { expense += data.amount; balance -= data.amount; }
+            });
+
+            // เรียงลำดับ (Sort): ถ้าปักหมุดให้อยู่ก่อน ถ้าไม่ได้ปักเรียงตามเวลา
+            allTransactions.sort((a, b) => {
+                if (a.isPinned && !b.isPinned) return -1;
+                if (!a.isPinned && b.isPinned) return 1;
+                return b.timestamp - a.timestamp;
+            });
+
+            // สร้าง UI รายการ
+            allTransactions.forEach((data) => {
+                const icon = data.type === 'income' ? 'fa-arrow-down-long text-iosGreen bg-iosGreen/10' : 'fa-arrow-up-long text-iosRed bg-iosRed/10';
+                const pinIcon = data.isPinned ? `<i class="fa-solid fa-thumbtack text-iosOrange text-xs absolute -top-1 -right-1 transform rotate-45 drop-shadow-md"></i>` : '';
+                const slipIcon = data.imageUrl ? `<button onclick="openImageModal('${data.imageUrl}')" class="ml-2 text-iosBlue hover:text-blue-700 bg-blue-100 dark:bg-blue-900/40 px-2 py-0.5 rounded text-[10px]"><i class="fa-solid fa-image"></i> ดูสลิป</button>` : '';
+
+                const div = document.createElement('div');
+                div.className = `relative bg-white/40 dark:bg-white/5 p-3 rounded-2xl flex justify-between items-center border hover:scale-[1.01] active:scale-[0.99] smooth-transition ${data.isPinned ? 'border-iosOrange/50 shadow-sm' : 'border-white/20'}`;
+                
+                div.innerHTML = `
+                    <div class="flex items-center gap-3">
+                        <div class="relative w-10 h-10 rounded-xl flex items-center justify-center text-sm ${icon}">
+                            ${pinIcon}
+                        </div>
+                        <div>
+                            <p class="text-sm font-bold tracking-tight">${data.category}</p>
+                            <div class="flex items-center mt-0.5">
+                                <p class="text-[10px] text-gray-500 dark:text-gray-400"><i class="fa-solid fa-building-columns opacity-70"></i> ${data.account}</p>
+                                ${slipIcon}
+                            </div>
+                        </div>
+                    </div>
+                    <div class="flex items-center gap-2">
+                        <div class="text-right">
+                            <p class="text-sm font-bold ${data.type === 'income' ? 'text-iosGreen' : 'text-iosRed'}">
+                                ${data.type === 'income' ? '+' : '-'}฿${data.amount.toLocaleString(undefined, {minimumFractionDigits: 2})}
+                            </p>
+                        </div>
+                        <div class="flex flex-col gap-1 ml-2">
+                            <button onclick="editTx('${data.id}')" class="text-gray-400 hover:text-iosBlue p-1 text-xs bg-gray-100 dark:bg-gray-800 rounded-md smooth-transition"><i class="fa-solid fa-pen"></i></button>
+                            <button onclick="deleteTx('${data.id}')" class="text-gray-400 hover:text-iosRed p-1 text-xs bg-gray-100 dark:bg-gray-800 rounded-md smooth-transition"><i class="fa-solid fa-trash-can"></i></button>
+                        </div>
+                    </div>
+                `;
+                listEl.appendChild(div);
+            });
+
+            // อัปเดตยอดรวม
+            document.getElementById('totalBalance').textContent = `฿${balance.toLocaleString(undefined, {minimumFractionDigits: 2})}`;
+            document.getElementById('totalIncome').textContent = `฿${income.toLocaleString(undefined, {minimumFractionDigits: 2})}`;
+            document.getElementById('totalExpense').textContent = `฿${expense.toLocaleString(undefined, {minimumFractionDigits: 2})}`;
+        });
+
+        // เปิด-ปิด Modal ดูสลิปแบบเต็มจอ (iOS Style)
+        window.openImageModal = function(url) {
+            const modal = document.getElementById('imageModal');
+            const img = document.getElementById('fullImage');
+            img.src = url;
+            modal.classList.remove('hidden');
+            setTimeout(() => {
+                modal.classList.remove('opacity-0');
+                img.classList.remove('scale-95');
+                img.classList.add('scale-100');
+            }, 10);
+        }
+        window.closeImageModal = function() {
+            const modal = document.getElementById('imageModal');
+            const img = document.getElementById('fullImage');
+            modal.classList.add('opacity-0');
+            img.classList.remove('scale-100');
+            img.classList.add('scale-95');
+            setTimeout(() => modal.classList.add('hidden'), 300); // รอ Animation จบ
+        }
+
+        // สลับธีมแสดงผล Light / Dark Mode
+        document.getElementById('themeToggle').addEventListener('click', () => {
+            document.documentElement.classList.toggle('dark');
+        });
+    </script>
+</body>
+</html>
