@@ -86,7 +86,7 @@
                 <div class="glass rounded-[2rem] p-6 shadow-2xl sticky top-6">
                     <div class="flex justify-between items-center mb-4">
                         <h2 class="text-lg font-bold tracking-tight" id="formTitle">บันทึกรายการใหม่</h2>
-                        <button type="button" id="cancelEditBtn" onclick="cancelEdit()" class="hidden text-xs bg-gray-200 dark:bg-gray-700 px-3 py-1 rounded-full font-semibold text-gray-600 dark:text-gray-300 hover:bg-gray-300 smooth-transition">ยกเลิกการแก้ไข</button>
+                        <button type="button" id="cancelEditBtn" onclick="cancelEdit()" class="hidden text-xs bg-gray-200 dark:bg-gray-700 px-3 py-1 rounded-full font-semibold text-gray-600 dark:text-gray-300 hover:bg-iosRed hover:text-white smooth-transition">ยกเลิกแก้ไข</button>
                     </div>
                     
                     <form id="txForm" class="space-y-4 relative">
@@ -99,7 +99,7 @@
                         </div>
 
                         <div class="flex items-center justify-between bg-white/60 dark:bg-black/20 p-3 rounded-xl border border-gray-200 dark:border-gray-800">
-                            <label class="text-sm font-medium text-gray-600 dark:text-gray-300 flex items-center gap-2"><i class="fa-solid fa-thumbtack text-iosOrange"></i> ปักหมุดรายการนี้</label>
+                            <label class="text-sm font-medium text-gray-600 dark:text-gray-300 flex items-center gap-2"><i class="fa-solid fa-thumbtack text-iosOrange"></i> ปักหมุดรายการนี้ให้อยู่บนสุด</label>
                             <div class="relative inline-block w-12 mr-2 align-middle select-none transition duration-200 ease-in">
                                 <input type="checkbox" name="toggle" id="isPinned" class="toggle-checkbox absolute block w-6 h-6 rounded-full bg-white border-4 appearance-none cursor-pointer"/>
                                 <label for="isPinned" class="toggle-label block overflow-hidden h-6 rounded-full bg-gray-300 cursor-pointer"></label>
@@ -111,7 +111,7 @@
                         </div>
 
                         <div>
-                            <input type="text" id="category" required placeholder="หมวดหมู่ / รายละเอียด" class="w-full bg-white/60 dark:bg-black/20 border border-gray-200 dark:border-gray-800 rounded-xl p-3 text-sm focus:outline-none focus:border-iosBlue smooth-transition">
+                            <input type="text" id="category" required placeholder="หมวดหมู่ / รายละเอียด เช่น ค่าข้าว, เงินเดือน" class="w-full bg-white/60 dark:bg-black/20 border border-gray-200 dark:border-gray-800 rounded-xl p-3 text-sm focus:outline-none focus:border-iosBlue smooth-transition">
                         </div>
 
                         <div>
@@ -161,7 +161,7 @@
         import { getFirestore, collection, addDoc, onSnapshot, query, orderBy, deleteDoc, doc, updateDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
         import { getStorage, ref, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-storage.js";
 
-        // คอนฟิก Firebase ของคุณ
+        // CONFIG ของคุณ: ตรวจเช็คค่าเหล่านี้ให้ตรงกับหน้าจอแอปที่คุณเพิ่งกดยืนยันสร้างมานะครับ
         const firebaseConfig = {
             apiKey: "AIzaSyAPMIN4I6FTGl1opmurV0Lc7ez0LR5-9Eg",
             authDomain: "savemoney-98630.firebaseapp.com",
@@ -171,16 +171,16 @@
             appId: "1:1046270701404:web:f4ada2bbf6d86c5f5e9b99"
         };
 
-        // Initialize Firebase
+        // เริ่มต้นการเชื่อมต่อระบบ
         const app = initializeApp(firebaseConfig);
         const db = getFirestore(app);
         const storage = getStorage(app);
         const txCollection = collection(db, "transactions");
 
         let currentType = 'expense';
-        let allTransactions = []; // เก็บ State ข้อมูลไว้ค้นหาตอนกดแก้ไข
+        let allTransactions = []; 
 
-        // 1. จัดการเปลี่ยนปุ่ม และ Clear Form
+        // 1. ฟังก์ชันสลับระหว่าง รายรับ/รายจ่าย และเคลียร์ข้อมูลฟอร์มทันที
         window.setTxType = function(type) {
             currentType = type;
             const btnExpense = document.getElementById('btnExpense');
@@ -194,17 +194,17 @@
                 btnExpense.className = "flex-1 py-2 text-sm font-semibold rounded-lg text-gray-500 dark:text-gray-400 smooth-transition";
             }
 
-            // เคลียร์ข้อมูลฟอร์มทุกครั้งที่เปลี่ยนฝั่ง (แต่ไม่เคลียร์หมุดและบัญชีเพื่อให้กรอกต่อง่าย)
+            // ลบค่าในช่องกรอกต่างๆ อัตโนมัติตามต้องการ เพื่อรอพิมพ์ค่าชุดใหม่ได้เลย
             document.getElementById('amount').value = '';
             document.getElementById('category').value = '';
             window.removeImage();
         }
 
-        // 2. จัดการเลือกรูปภาพ Preview
+        // 2. ฟังก์ชันจัดการจัดการพรีวิวรูปภาพสลิปที่แนบ
         window.previewFile = function() {
             const file = document.getElementById('slipImage').files[0];
             if (file) {
-                document.getElementById('fileName').innerText = "เลือกไฟล์แล้ว (" + file.name.substring(0,10) + "...)";
+                document.getElementById('fileName').innerText = "เลือกไฟล์เรียบร้อยแล้ว";
                 const reader = new FileReader();
                 reader.onload = function(e) {
                     document.getElementById('imagePreview').src = e.target.result;
@@ -214,7 +214,6 @@
             }
         }
 
-        // เอาภาพที่เลือกออก
         window.removeImage = function() {
             document.getElementById('slipImage').value = '';
             document.getElementById('fileName').innerHTML = 'แนบรูปภาพ / สลิป (ถ้ามี)';
@@ -223,11 +222,11 @@
             document.getElementById('oldImageUrl').value = '';
         }
 
-        // 3. ฟังก์ชันบันทึกข้อมูล (เพิ่มใหม่ หรือ อัปเดต) ป้องกันการกดซ้ำด้วย Loading
+        // 3. ฟังก์ชันการบันทึก (ทั้งเขียนใหม่ หรืออัปเดตงานเก่า) + ระบบ Loading Lock กันกดซ้ำ
         document.getElementById('txForm').addEventListener('submit', async (e) => {
             e.preventDefault();
             
-            // เปิดหน้าต่าง Loading Block UI
+            // เปิดหน้าต่าง Loading เพื่อล็อก UI ไม่ให้ยูสเซอร์กดย้ำระหว่างประมวลผลขึ้นคลาวด์
             const loadingOverlay = document.getElementById('loadingOverlay');
             loadingOverlay.classList.remove('hidden');
 
@@ -238,14 +237,14 @@
             const isPinned = document.getElementById('isPinned').checked;
             const file = document.getElementById('slipImage').files[0];
             
-            let imageUrl = document.getElementById('oldImageUrl').value; // ใช้ URL เดิมถ้าไม่ได้อัปรูปใหม่
+            let imageUrl = document.getElementById('oldImageUrl').value; 
 
             try {
-                // ถ้ามีการเลือกไฟล์ใหม่ ให้อัปโหลดขึ้น Storage ก่อน
+                // หากมีการอัปไฟล์รูปใหม่ ให้ส่งเข้าคลาวด์ Storage ก่อน
                 if (file) {
                     const storageRef = ref(storage, 'slips/' + Date.now() + '_' + file.name);
                     await uploadBytes(storageRef, file);
-                    imageUrl = await getDownloadURL(storageRef); // ขอ Link รูปที่อัปโหลดเสร็จ
+                    imageUrl = await getDownloadURL(storageRef);
                 }
 
                 const txData = {
@@ -255,42 +254,41 @@
                     account: account,
                     isPinned: isPinned,
                     imageUrl: imageUrl,
-                    timestamp: editId ? undefined : new Date().getTime() // ถ้าแก้ไข ไม่ต้องเปลี่ยนเวลาสร้าง
+                    timestamp: editId ? undefined : new Date().getTime() 
                 };
 
-                // ลบค่า undefined ออก (กรณีแก้ไข จะได้ไม่เขียนทับ timestamp เก่า)
+                // ล้างค่าข้อมูล undefined เพื่อไม่ให้ไปเขียนทับเวลาเดิมกรณีเป็นการกดแก้ไขข้อมูล
                 Object.keys(txData).forEach(key => txData[key] === undefined && delete txData[key]);
 
                 if (editId) {
-                    // โหมดอัปเดตข้อมูล
+                    // ดำเนินการอัปเดตข้อมูลรายการเดิม
                     await updateDoc(doc(db, "transactions", editId), txData);
-                    alert("อัปเดตรายการเรียบร้อย!");
-                    window.cancelEdit(); // ยกเลิกโหมดแก้ไข
+                    window.cancelEdit(); 
                 } else {
-                    // โหมดสร้างใหม่
+                    // ดำเนินการสร้างเพิ่มรายการใหม่
                     await addDoc(txCollection, txData);
                     document.getElementById('txForm').reset();
                     window.removeImage();
                 }
                 
             } catch (error) {
-                alert("เกิดข้อผิดพลาด: " + error.message);
+                alert("เกิดข้อผิดพลาดจากระบบ: " + error.message);
             } finally {
-                // ปิด Loading
+                // ปิดหน้าจอโหลดเมื่อทำงานเสร็จสมบูรณ์
                 loadingOverlay.classList.add('hidden');
             }
         });
 
-        // 4. เข้าสู่โหมดแก้ไข (ดึงข้อมูลมาใส่ Form)
+        // 4. ระบบแก้ไขข้อมูล (ดึงข้อมูลกลับขึ้นฟอร์มและเลื่อนสกรีนขึ้นด้านบน)
         window.editTx = function(id) {
             const tx = allTransactions.find(t => t.id === id);
             if(tx) {
-                window.scrollTo({ top: 0, behavior: 'smooth' }); // เลื่อนขึ้นไปบนสุด
+                window.scrollTo({ top: 0, behavior: 'smooth' }); 
                 
-                document.getElementById('formTitle').innerText = "แก้ไขรายการ";
+                document.getElementById('formTitle').innerText = "แก้ไขรายการบันทึก";
                 document.getElementById('formTitle').classList.add("text-iosOrange");
                 document.getElementById('cancelEditBtn').classList.remove('hidden');
-                document.getElementById('submitText').innerText = "อัปเดตข้อมูล";
+                document.getElementById('submitText').innerText = "อัปเดตข้อมูลรายการ";
                 
                 document.getElementById('editId').value = tx.id;
                 document.getElementById('amount').value = tx.amount;
@@ -300,19 +298,17 @@
                 
                 window.setTxType(tx.type);
 
-                // ถ้ารายการเดิมมีรูปภาพ ให้แสดง Preview
                 if (tx.imageUrl) {
                     document.getElementById('oldImageUrl').value = tx.imageUrl;
                     document.getElementById('imagePreview').src = tx.imageUrl;
                     document.getElementById('imagePreviewContainer').classList.remove('hidden');
-                    document.getElementById('fileName').innerText = "มีรูปภาพแนบอยู่แล้ว (เลือกใหม่เพื่อเปลี่ยน)";
+                    document.getElementById('fileName').innerText = "มีรูปภาพสลิปเดิมอยู่แล้ว";
                 } else {
                     window.removeImage();
                 }
             }
         }
 
-        // ยกเลิกโหมดแก้ไข
         window.cancelEdit = function() {
             document.getElementById('formTitle').innerText = "บันทึกรายการใหม่";
             document.getElementById('formTitle').classList.remove("text-iosOrange");
@@ -322,13 +318,12 @@
             document.getElementById('editId').value = "";
             document.getElementById('txForm').reset();
             window.removeImage();
-            window.setTxType('expense'); // กลับไปตั้งต้นที่รายจ่าย
+            window.setTxType('expense'); 
         }
 
-        // 5. ระบบยืนยันการลบ
+        // 5. ระบบยืนยันการลบแบบ Pop-up ชัดเจนป้องกันพลาดไปโดน
         window.deleteTx = async function(id) {
-            if(confirm('🗑️ คุณแน่ใจใช่ไหมว่าจะลบข้อมูลรายการนี้แบบถาวร?\n(ระบบจะลบข้อมูลออกจาก Cloud ทันที)')) {
-                // สามารถเพิ่ม Loading Overlay แบบอิสระได้ แต่เพื่อความไวใช้ตัวเดิมของ Form ได้
+            if(confirm('🗑️ ยืนยันการลบ?\nคุณแน่ใจใช่ไหมว่าต้องการลบรายการนี้ออกจากระบบ Cloud อย่างถาวร')) {
                 document.getElementById('loadingOverlay').classList.remove('hidden');
                 try {
                     await deleteDoc(doc(db, "transactions", id));
@@ -340,20 +335,19 @@
             }
         }
 
-        // 6. ดึงข้อมูล Real-time (ระบบปักหมุด)
+        // 6. ระบบ Real-time ดึงข้อมูลมาแสดงผลและจัดกลุ่มคัดกรองการปักหมุด (Pinning)
         const q = query(txCollection, orderBy("timestamp", "desc"));
         onSnapshot(q, (snapshot) => {
             const listEl = document.getElementById('transactionList');
             listEl.innerHTML = '';
             
             let balance = 0, income = 0, expense = 0;
-            allTransactions = []; // รีเซ็ต
+            allTransactions = []; 
 
             if (snapshot.empty) {
-                listEl.innerHTML = `<div class="text-center py-8 text-gray-400 text-sm">ยังไม่มีรายการบันทึกครับผม</div>`;
+                listEl.innerHTML = `<div class="text-center py-8 text-gray-400 text-sm">ยังไม่มีรายการบันทึกข้อมูลครับ</div>`;
             }
 
-            // เก็บเข้า Array เพื่อคำนวณและเรียงลำดับ ปักหมุด (Pin) ให้อยู่บนสุด
             snapshot.forEach((docSnap) => {
                 const data = docSnap.data();
                 allTransactions.push({ id: docSnap.id, ...data });
@@ -362,14 +356,14 @@
                 else { expense += data.amount; balance -= data.amount; }
             });
 
-            // เรียงลำดับ (Sort): ถ้าปักหมุดให้อยู่ก่อน ถ้าไม่ได้ปักเรียงตามเวลา
+            // ตรรกะคัดแยกเรียงสลับ: รายการที่ "ปักหมุด" จะถูกดันขึ้นอันดับแรกเสมอ
             allTransactions.sort((a, b) => {
                 if (a.isPinned && !b.isPinned) return -1;
                 if (!a.isPinned && b.isPinned) return 1;
                 return b.timestamp - a.timestamp;
             });
 
-            // สร้าง UI รายการ
+            // สร้างการ์ด UI ลายเส้นระยิบระยับสไตล์ iOS Apple App
             allTransactions.forEach((data) => {
                 const icon = data.type === 'income' ? 'fa-arrow-down-long text-iosGreen bg-iosGreen/10' : 'fa-arrow-up-long text-iosRed bg-iosRed/10';
                 const pinIcon = data.isPinned ? `<i class="fa-solid fa-thumbtack text-iosOrange text-xs absolute -top-1 -right-1 transform rotate-45 drop-shadow-md"></i>` : '';
@@ -406,13 +400,13 @@
                 listEl.appendChild(div);
             });
 
-            // อัปเดตยอดรวม
+            // แสดงคำนวณยอดเงินรวมชุดสรุป
             document.getElementById('totalBalance').textContent = `฿${balance.toLocaleString(undefined, {minimumFractionDigits: 2})}`;
             document.getElementById('totalIncome').textContent = `฿${income.toLocaleString(undefined, {minimumFractionDigits: 2})}`;
             document.getElementById('totalExpense').textContent = `฿${expense.toLocaleString(undefined, {minimumFractionDigits: 2})}`;
         });
 
-        // เปิด-ปิด Modal ดูสลิปแบบเต็มจอ (iOS Style)
+        // 7. ควบคุมกล่องสไลด์ดูรูปภาพสลิปแบบขยายเต็มจอ
         window.openImageModal = function(url) {
             const modal = document.getElementById('imageModal');
             const img = document.getElementById('fullImage');
@@ -430,10 +424,10 @@
             modal.classList.add('opacity-0');
             img.classList.remove('scale-100');
             img.classList.add('scale-95');
-            setTimeout(() => modal.classList.add('hidden'), 300); // รอ Animation จบ
+            setTimeout(() => modal.classList.add('hidden'), 300);
         }
 
-        // สลับธีมแสดงผล Light / Dark Mode
+        // 8. สลับโหมดกลางวัน/กลางคืน (Light/Dark mode)
         document.getElementById('themeToggle').addEventListener('click', () => {
             document.documentElement.classList.toggle('dark');
         });
